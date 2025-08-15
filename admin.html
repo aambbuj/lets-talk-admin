@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f6f6;
+      display: flex;
+    }
+    .sidebar {
+      width: 220px;
+      background: #ff5ca7;
+      height: 100vh;
+      padding-top: 30px;
+      position: fixed;
+      color: #fff;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 25px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background: #ff318f;
+    }
+    .main-content {
+      margin-left: 220px;
+      padding: 30px;
+      flex-grow: 1;
+    }
+    .table-responsive { width: 100%; overflow-x: auto; }
+    .table-responsive table { min-width: 900px; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      width: 320px;
+      max-width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      outline: none;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #ff5ca7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table th, table td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    table th {
+      background-color: #ff5ca7;
+      color: white;
+    }
+    table tr:hover {
+      background-color: #f2f2f2;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: #e6f4ea; color: #137333; }
+    .badge-warning { background: #fff4e5; color: #b26a00; }
+    .tab-section {
+      display: none;
+    }
+    .tab-section.active {
+      display: block;
+    }
+    
+    .approve-btn {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+  }
+  .approve-btn:hover {
+    background: #218838;
+  }
+  
+  .reject-btn {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+  }
+  .reject-btn:hover {
+    background: #c82333;
+  }
+    @media screen and (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content {
+        margin-left: 0;
+        padding: 15px;
+      }
+      .approve-btn, .reject-btn, .delete-btn { padding: 6px 8px; font-size: 12px; }
+    }
+    .delete-btn {
+      background: #ff5ca7;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background: #ff318f;
+    }
+    /* Page Loader */
+    .page-loader { position: fixed; inset: 0; background: rgba(255,255,255,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .page-loader.show { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 5px solid #f3f3f3; border-top: 5px solid #ff5ca7; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <script src="js/config.js"></script>
+  <!-- Page Loader -->
+  <div id="pageLoader" class="page-loader"><div class="spinner"></div></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Admin</h2>
+    <a onclick="showTab('hostTab')">Host</a>
+    <a onclick="showTab('userTab')">User</a>
+    <a href="#">Payment List</a>
+    <a href="#">User-Host Connections</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Host Details -->
+    <div class="card tab-section active" id="hostTab">
+      <h1>Host Details</h1>
+      <div class="toolbar">
+        <input id="searchInput" class="search-input" placeholder="Search by name, phone, or Host ID..."/>
+      </div>
+      <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>DOB</th>
+            <th>Phone</th>
+            <th>Total Points</th>
+            <th>Total Call Time</th>
+            <th>Bank</th>
+            <th>KYC</th>
+            <th>Host ID</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminData">
+          <tr><td colspan="9">Loading...</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- User Details -->
+    <div class="card tab-section" id="userTab">
+      <h1>User Details</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>R Amount</th>
+            <th>Total Call Time</th>
+          </tr>
+        </thead>
+        <tbody id="userData">
+          <tr>
+            <td>USR001</td>
+            <td>9988776655</td>
+            <td>user1@example.com</td>
+            <td>₹500</td>
+            <td>22 mins</td>
+          </tr>
+          <tr>
+            <td>USR002</td>
+            <td>8899001122</td>
+            <td>user2@example.com</td>
+            <td>₹750</td>
+            <td>40 mins</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    function showModal(type, title, message) {
+      // Minimal inline modal using alert-like fallback
+      // You can replace with a nicer modal library if desired
+      const color = type === 'success' ? '#28a745' : (type === 'error' ? '#dc3545' : '#ff5ca7');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:3000;';
+      modal.innerHTML = `<div style="background:#fff;padding:18px 22px;border-radius:10px;min-width:260px;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+        <div style="font-weight:700;color:${color};margin-bottom:6px;">${title || ''}</div>
+        <div style="font-size:14px;color:#444;margin-bottom:12px;">${message || ''}</div>
+        <button id="adminModalOk" style="background:#ff5ca7;color:#fff;border:none;padding:8px 16px;border-radius:20px;cursor:pointer;">OK</button>
+      </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector('#adminModalOk').addEventListener('click', () => modal.remove());
+    }
+
+    function showConfirmModal(title, message, onConfirm) {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:3000;';
+      modal.innerHTML = `<div style="background:#fff;padding:18px 22px;border-radius:10px;min-width:280px;max-width:92%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+        <div style="font-weight:700;color:#ff5ca7;margin-bottom:6px;">${title || 'Confirm'}</div>
+        <div style="font-size:14px;color:#444;margin-bottom:14px;">${message || ''}</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button id="adminConfirmCancel" style="background:#e9ecef;color:#333;border:none;padding:8px 14px;border-radius:20px;cursor:pointer;">Cancel</button>
+          <button id="adminConfirmOk" style="background:#ff5ca7;color:#fff;border:none;padding:8px 16px;border-radius:20px;cursor:pointer;">Yes</button>
+        </div>
+      </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector('#adminConfirmCancel').addEventListener('click', () => modal.remove());
+      modal.querySelector('#adminConfirmOk').addEventListener('click', async () => {
+        try { await onConfirm?.(); } finally { modal.remove(); }
+      });
+    }
+    let allHosts = [];
+
+    function showTab(tabId) {
+      const allTabs = document.querySelectorAll(".tab-section");
+      allTabs.forEach(tab => tab.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    function showPageLoader() { document.getElementById('pageLoader').classList.add('show'); }
+    function hidePageLoader() { document.getElementById('pageLoader').classList.remove('show'); }
+
+    function computeKycBadge(host) {
+      const images = Array.isArray(host?.Images) ? host.Images : [];
+      const idCard = images.find(img => img && img.image_type === 'id_card_photo' && img.url);
+      const isCompleted = Boolean(idCard && idCard.url);
+      const label = isCompleted ? 'Completed' : 'Pending';
+      const cls = isCompleted ? 'badge-success' : 'badge-warning';
+      return `<span class="badge ${cls}">${label}</span>`;
+    }
+
+    function renderHosts(list) {
+      const tbody = document.getElementById("adminData");
+      tbody.innerHTML = "";
+      if (!list || list.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='9'>No host data available.</td></tr>";
+        return;
+      }
+      list.forEach(host => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${host.name || "-"}</td>
+          <td>${host.dob || "-"}</td>
+          <td>${host.mobileNumber || host.phone || "-"}</td>
+          <td>${host.totalPoints || "0"}</td>
+          <td>${host.totalCallTime || "0"} mins</td>
+          <td>${host.bankName || "-"}</td>
+          <td>${computeKycBadge(host)}</td>
+          <td><a href="host-details.html?user_id=${host.id}" target="_blank" style="color:#ff5ca7; text-decoration: underline;">${host.user_profile_id || "-"}</a></td>
+          <td>
+            <button class="approve-btn" onclick="approveHost('${host.id}', this)">Approve</button>
+            <button class="reject-btn" onclick="rejectHost('${host.id}', this)">Reject</button>
+            <button class="delete-btn" onclick="deleteHost('${host.id}', this)">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadHostDetails() {
+      const tbody = document.getElementById("adminData");
+      tbody.innerHTML = "<tr><td colspan='9'>Loading...</td></tr>";
+
+      try {
+        showPageLoader();
+        const response = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.HOST_LIST_FOR_ADMIN), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        tbody.innerHTML = "";
+
+        if (Array.isArray(result.data)) {
+          allHosts = result.data;
+          renderHosts(allHosts);
+        } else {
+          tbody.innerHTML = "<tr><td colspan='9'>No host data available.</td></tr>";
+        }
+      } catch (err) {
+        console.error("Error loading host data:", err);
+        tbody.innerHTML = "<tr><td colspan='9' style='color:red;'>Error loading host data</td></tr>";
+      } finally { hidePageLoader(); }
+    }
+
+    async function deleteHost(user_profile_id, btn) {
+      showConfirmModal('Delete Host', 'Are you sure you want to delete this host?', async () => {
+        try {
+          const res = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.DELETE_HOST_THROUGH_ADMIN), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: parseInt(user_profile_id) })
+          });
+          const result = await res.json();
+          if (result.success) {
+            showModal('success', 'Deleted', 'Host deleted successfully.');
+            btn.closest("tr").remove();
+          } else {
+            showModal('error', 'Failed', result.message || 'Failed to delete host.');
+          }
+        } catch (err) {
+          console.error("Delete failed:", err);
+          showModal('error', 'Error', 'Error deleting host.');
+        }
+      });
+    }
+    
+    async function approveHost(user_profile_id, btn) {
+      showConfirmModal('Approve Host', 'Are you sure you want to approve this host?', async () => {
+        try {
+          const res = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.APPROVE_HOST_THROUGH_ADMIN), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: parseInt(user_profile_id) })
+          });
+          const result = await res.json();
+          if (result.success) {
+            showModal('success', 'Approved', 'Host approved successfully.');
+            btn.disabled = true;
+            btn.style.opacity = "0.6";
+          } else {
+            showModal('error', 'Failed', result.message || 'Failed to approve host.');
+          }
+        } catch (err) {
+          console.error("Approval failed:", err);
+          showModal('error', 'Error', 'Error approving host.');
+        }
+      });
+    }
+
+async function rejectHost(user_profile_id, btn) {
+  showConfirmModal('Reject Host', 'Are you sure you want to reject this host?', async () => {
+    try {
+      const res = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.REJECT_HOST_THROUGH_ADMIN), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: parseInt(user_profile_id) })
+      });
+      const result = await res.json();
+      if (result.success) {
+        showModal('success', 'Rejected', 'Host rejected successfully.');
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+      } else {
+        showModal('error', 'Failed', result.message || 'Failed to reject host.');
+      }
+    } catch (err) {
+      console.error("Rejection failed:", err);
+      showModal('error', 'Error', 'Error rejecting host.');
+    }
+  });
+}
+
+
+    // Search wiring
+    document.addEventListener("DOMContentLoaded", () => {
+      loadHostDetails();
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const q = (e.target.value || '').toLowerCase().trim();
+          if (!q) { renderHosts(allHosts); return; }
+          const filtered = (allHosts || []).filter(h => {
+            const name = (h.name || '').toLowerCase();
+            const phone = (h.mobileNumber || h.phone || '').toLowerCase();
+            const uid = (h.user_profile_id || '').toLowerCase();
+            return name.includes(q) || phone.includes(q) || uid.includes(q);
+          });
+          renderHosts(filtered);
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>
