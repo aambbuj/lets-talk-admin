@@ -7,8 +7,8 @@ const API_CONFIG = {
   },
 
   // Set to 'local' during development, 'production' on deployment
-  CURRENT_ENV: 'local',
-  // CURRENT_ENV: 'production',
+  // CURRENT_ENV: 'local',
+  CURRENT_ENV: 'production',
 
   getBaseUrl: function() {
     return this.BASE_URLS[this.CURRENT_ENV.toUpperCase()] || this.BASE_URLS.PRODUCTION;
