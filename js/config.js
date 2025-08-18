@@ -7,8 +7,8 @@ const API_CONFIG = {
   },
 
   // Set to 'local' during development, 'production' on deployment
-  // CURRENT_ENV: 'local',
-  CURRENT_ENV: 'production',
+  CURRENT_ENV: 'local',
+  // CURRENT_ENV: 'production',
 
   getBaseUrl: function() {
     return this.BASE_URLS[this.CURRENT_ENV.toUpperCase()] || this.BASE_URLS.PRODUCTION;
@@ -24,7 +24,9 @@ const API_CONFIG = {
       HOST_DETAILS_BY_ID_FOR_ADMIN: '/host-details-by-id-for-admin',
       APPROVE_HOST_THROUGH_ADMIN: '/approve-host-through-admin',
       REJECT_HOST_THROUGH_ADMIN: '/reject-host-through-admin',
-      DELETE_HOST_THROUGH_ADMIN: '/delete-host-through-admin'
+      DELETE_HOST_THROUGH_ADMIN: '/delete-host-through-admin',
+      SET_POPULAR_HOST: '/set-popular-host',
+      HOST_LIST_POPULAR: '/host-list-popular'
     }
   },
 

@@ -99,6 +99,8 @@
     .tab-section.active {
       display: block;
     }
+    .popular-toggle { display:flex; align-items:center; gap:8px; }
+    .order-input { width:70px; padding:4px 6px; border:1px solid #ddd; border-radius:6px; }
     
     .approve-btn {
     background: #28a745;
@@ -161,6 +163,7 @@
     <h2>Admin</h2>
     <a onclick="showTab('hostTab')">Host</a>
     <a onclick="showTab('userTab')">User</a>
+    <a onclick="showTab('popularTab')">Popular Hosts</a>
     <a href="#">Payment List</a>
     <a href="#">User-Host Connections</a>
   </div>
@@ -226,6 +229,28 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Popular Hosts -->
+    <div class="card tab-section" id="popularTab">
+      <h1>Popular Hosts</h1>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Host ID</th>
+              <th>Phone</th>
+              <th>Popular</th>
+              <th>Order</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="popularBody">
+            <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -341,6 +366,57 @@
       } finally { hidePageLoader(); }
     }
 
+    // Popular Hosts Management
+    function renderPopularHosts(list){
+      const tbody = document.getElementById('popularBody');
+      tbody.innerHTML = '';
+      if (!list || list.length===0) { tbody.innerHTML = "<tr><td colspan='6'>No data</td></tr>"; return; }
+      list.forEach(h => {
+        const tr = document.createElement('tr');
+        const checked = h.is_popular ? 'checked' : '';
+        const orderVal = (h.popular_order ?? '').toString();
+        tr.innerHTML = `
+          <td>${h.name||'-'}</td>
+          <td>${h.user_profile_id||h.id}</td>
+          <td>${h.phone||'-'}</td>
+          <td><input type="checkbox" ${checked} onchange="togglePopular(${h.id}, this.checked)"></td>
+          <td><input class="order-input" type="number" value="${orderVal}" placeholder="order" onchange="updatePopularOrder(${h.id}, this.value)"></td>
+          <td><button class="delete-btn" onclick="togglePopular(${h.id}, false)">Unset</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadPopularHosts(){
+      const tbody = document.getElementById('popularBody');
+      tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+      try{
+        showPageLoader();
+        const resp = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.HOST_LIST_FOR_ADMIN), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({}) });
+        const out = await resp.json();
+        const list = Array.isArray(out.data) ? out.data : [];
+        renderPopularHosts(list);
+      }catch(e){ tbody.innerHTML = "<tr><td colspan='6' style='color:red;'>Failed to load</td></tr>"; }
+      finally{ hidePageLoader(); }
+    }
+
+    async function togglePopular(userId, isPopular){
+      try{
+        const res = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.SET_POPULAR_HOST), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ user_id: userId, is_popular: !!isPopular }) });
+        const out = await res.json();
+        if (!out.success) showModal('error','Failed', out.message||'');
+      }catch(e){ showModal('error','Error','Could not update'); }
+    }
+
+    async function updatePopularOrder(userId, val){
+      const popular_order = val === '' ? null : Number(val);
+      try{
+        const res = await fetch(API_CONFIG.getAuthUrl(API_CONFIG.ENDPOINTS.AUTH.SET_POPULAR_HOST), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ user_id: userId, popular_order }) });
+        const out = await res.json();
+        if (!out.success) showModal('error','Failed', out.message||'');
+      }catch(e){ showModal('error','Error','Could not update'); }
+    }
+
     async function deleteHost(user_profile_id, btn) {
       showConfirmModal('Delete Host', 'Are you sure you want to delete this host?', async () => {
         try {
@@ -413,6 +489,7 @@ async function rejectHost(user_profile_id, btn) {
     // Search wiring
     document.addEventListener("DOMContentLoaded", () => {
       loadHostDetails();
+      loadPopularHosts();
       const searchInput = document.getElementById('searchInput');
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
