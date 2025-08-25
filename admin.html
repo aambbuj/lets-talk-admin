@@ -328,7 +328,7 @@
           <td>${computeKycBadge(host)}</td>
           <td><a href="host-details.html?user_id=${host.id}" target="_blank" style="color:#ff5ca7; text-decoration: underline;">${host.user_profile_id || "-"}</a></td>
           <td>
-            <button class="approve-btn" onclick="approveHost('${host.id}', this)">Approve</button>
+            <button ${host.is_verified ? 'disabled' : 'class="approve-btn"'}  onclick="approveHost('${host.id}', this)">Approve</button>
             <button class="reject-btn" onclick="rejectHost('${host.id}', this)">Reject</button>
             <button class="delete-btn" onclick="deleteHost('${host.id}', this)">Delete</button>
           </td>
